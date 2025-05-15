@@ -1,0 +1,4 @@
+usuario_id,tipo,monto,fecha,descripcion,servicio
+12345678,consignación,500.00,2025-05-15,Depósito en efectivo,null
+23456789,retirar,200.00,2025-05-14,Retiro en cajero,null
+25456789,pago_servicio,100.00,2025-05-13,Pago de servicio de luz,luz

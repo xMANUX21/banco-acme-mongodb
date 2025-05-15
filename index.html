@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema Bancario</title>
+</head>
+<body>
+  <h1>Sistema Bancario</h1>
+  
+  <!-- Selección del usuario -->
+  <label for="usuario">Selecciona un usuario:</label>
+  <select id="usuario">
+    <!-- Los usuarios se llenarán dinámicamente aquí -->
+  </select>
+
+  <br><br>
+  
+  <!-- Botones de acción -->
+  <button onclick="realizarMovimiento('consignar')">Consignar</button>
+  <button onclick="realizarMovimiento('retirar')">Retirar</button>
+  <button onclick="realizarMovimiento('pagar_servicio')">Pagar Servicio</button>
+
+  <div id="movimientos">
+    <h3>Movimientos Realizados</h3>
+    <!-- Aquí se mostrarán los movimientos -->
+  </div>
+
+  <script>
+    // Función para obtener los usuarios disponibles
+    async function cargarUsuarios() {
+      const response = await fetch('/api/usuarios');
+      const usuarios = await response.json();
+
+      const selectUsuario = document.getElementById('usuario');
+      usuarios.forEach(usuario => {
+        const option = document.createElement('option');
+        option.value = usuario._id;
+        option.textContent = usuario.nombre;
+        selectUsuario.appendChild(option);
+      });
+    }
+
+    // Función para realizar el movimiento
+    async function realizarMovimiento(tipo) {
+      const usuarioId = document.getElementById('usuario').value;
+      const monto = prompt('Ingresa el monto:');
+      
+      const response = await fetch('/api/movimientos', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          usuario_id: usuarioId,
+          tipo: tipo,
+          monto: parseFloat(monto),
+          fecha: new Date(),
+        })
+      });
+      
+      if (response.ok) {
+        alert(`${tipo} realizado exitosamente!`);
+        listarMovimientos(usuarioId);
+      } else {
+        alert('Error al realizar el movimiento');
+      }
+    }
+
+    // Función para listar los movimientos de un usuario
+    async function listarMovimientos(usuarioId) {
+      const response = await fetch(`/api/movimientos/${usuarioId}`);
+      const movimientos = await response.json();
+
+      const divMovimientos = document.getElementById('movimientos');
+      divMovimientos.innerHTML = '<h3>Movimientos Realizados</h3>';
+
+      movimientos.forEach(movimiento => {
+        const p = document.createElement('p');
+        p.textContent = `${movimiento.tipo} de ${movimiento.monto} el ${new Date(movimiento.fecha).toLocaleString()}`;
+        divMovimientos.appendChild(p);
+      });
+    }
+
+    // Cargar los usuarios al inicio
+    cargarUsuarios();
+  </script>
+</body>
+</html>
