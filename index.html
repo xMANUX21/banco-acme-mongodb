@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banco Digital</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Banco Digital</h1>
+        
+        <div class="operations">
+            <!-- Consignacionn -->
+            <div class="operation-card">
+                <h2>Consignar</h2>
+                <form id="consignarForm">
+                    <div class="form-group">
+                        <label for="consignarId">ID de Usuario:</label>
+                        <input type="text" id="consignarId" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="consignarMonto">Monto:</label>
+                        <input type="number" id="consignarMonto" min="0" step="0.01" required>
+                    </div>
+                    <button type="submit">Consignar</button>
+                </form>
+                <div id="consignarResult" class="result"></div>
+            </div>
+            
+            <!-- Retiro -->
+            <div class="operation-card">
+                <h2>Retirar</h2>
+                <form id="retiroForm">
+                    <div class="form-group">
+                        <label for="retiroId">ID de Usuario:</label>
+                        <input type="text" id="retiroId" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="retiroMonto">Monto:</label>
+                        <input type="number" id="retiroMonto" min="0" step="0.01" required>
+                    </div>
+                    <button type="submit">Retirar</button>
+                </form>
+                <div id="retiroResult" class="result"></div>
+            </div>
+            
+            <!-- Pago de Servicio -->
+            <div class="operation-card">
+                <h2>Pago de Servicio</h2>
+                <form id="pagoServicioForm">
+                    <div class="form-group">
+                        <label for="pagoId">ID de Usuario:</label>
+                        <input type="text" id="pagoId" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="pagoMonto">Monto:</label>
+                        <input type="number" id="pagoMonto" min="0" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="pagoServicio">Servicio:</label>
+                        <select id="pagoServicio" required>
+                            <option value="">Seleccione...</option>
+                            <option value="gas">Gas</option>
+                            <option value="luz">Luz</option>
+                            <option value="agua">Agua</option>
+                        </select>
+                    </div>
+                    <button type="submit">Pagar Servicio</button>
+                </form>
+                <div id="pagoServicioResult" class="result"></div>
+            </div>
+            
+            <!-- Consultar Movimientos -->
+            <div class="operation-card">
+                <h2>Movimientos</h2>
+                <form id="movimientosForm">
+                    <div class="form-group">
+                        <label for="movimientosId">ID de Usuario:</label>
+                        <input type="text" id="movimientosId" required>
+                    </div>
+                    <button type="submit">Consultar Movimientos</button>
+                </form>
+                <div id="movimientosResult" class="result"></div>
+                <div id="usuarioInfo" class="usuario-info"></div>
+                <div id="movimientosList" class="movimientos-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        //  formatear fecha
+        function formatDate(dateString) {
+            const options = { 
+                year: 'numeric', 
+                month: '2-digit', 
+                day: '2-digit', 
+                hour: '2-digit', 
+                minute: '2-digit',
+                second: '2-digit'
+            };
+            return new Date(dateString).toLocaleDateString('es-ES', options);
+        }
+
+        //  mostrar informacion del usuario
+        function displayUsuarioInfo(usuario) {
+            const container = document.getElementById('usuarioInfo');
+            container.innerHTML = `
+                <div class="usuario-card">
+                    <h3>${usuario.nombre || 'Usuario no encontrado'}</h3>
+                    <p><strong>Email:</strong> ${usuario.email || 'N/A'}</p>
+                    <p><strong>Saldo actual:</strong> $${usuario.saldo?.toFixed(2) || '0.00'}</p>
+                </div>
+            `;
+        }
+
+        //  mostrar movimientos
+       //  mostrar movimientos 
+function displayMovimientos(data) {
+    displayUsuarioInfo(data.usuario);
+    
+    const container = document.getElementById('movimientosList');
+    
+    if (!data.movimientos || data.movimientos.length === 0) {
+        container.innerHTML = '<p>No hay movimientos registrados</p>';
+        return;
+    }
+    
+    let html = `
+        <table>
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Tipo</th>
+                    <th>Detalle</th>
+                    <th>Monto</th>
+                    <th>Descripción</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    data.movimientos.forEach(mov => {
+        // Mapeo de tipos para consistencia
+        const tipoMap = {
+            'consignación': 'Consignación',
+            'retiro': 'Retiro',
+            'pago_servicio': 'Pago servicio',
+            'movimiento': 'Movimiento',
+            'transferencia': 'Transferencia'
+        };
+        
+        const tipo = tipoMap[mov.tipo] || mov.tipo;
+        const montoClass = mov.tipo === 'consignación' ? 'positive' : 'negative';
+        let detalle = '';
+        
+        if (mov.servicio) {
+            const servicioMap = {
+                'gas': 'Servicio de Gas',
+                'luz': 'Servicio de Luz',
+                'agua': 'Servicio de Agua'
+            };
+            detalle = servicioMap[mov.servicio] || mov.servicio;
+        }
+        
+        html += `
+            <tr>
+                <td>${formatDate(mov.fecha)}</td>
+                <td>${tipo}</td>
+                <td>${detalle}</td>
+                <td class="${montoClass}">
+                    ${mov.tipo === 'consignación' ? '+' : '-'}$${mov.monto?.toFixed(2) || '0.00'}
+                </td>
+                <td>${mov.descripcion || ''}</td>
+            </tr>
+        `;
+    });
+    
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+
+        //  maneja el envío de formularios
+        async function handleFormSubmit(event, endpoint, resultElementId) {
+            event.preventDefault();
+            
+            const form = event.target;
+            const id = form.querySelector('input[type="text"]').value;
+            const montoInput = form.querySelector('input[type="number"]');
+            const monto = montoInput ? montoInput.value : null;
+            
+            try {
+                const body = { id };
+                if (monto) body.monto = parseFloat(monto);
+                
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById(resultElementId).textContent = 'Operación exitosa!';
+                    document.getElementById(resultElementId).className = 'result success';
+                    
+                    // Actualizar movimientos si no es la consulta de movimientos
+                    if (endpoint !== '/movimientos') {
+                        document.getElementById('movimientosId').value = id;
+                        document.getElementById('movimientosForm').dispatchEvent(new Event('submit'));
+                    }
+                } else {
+                    throw new Error(result.message || 'Error en la operación');
+                }
+            } catch (error) {
+                document.getElementById(resultElementId).textContent = error.message;
+                document.getElementById(resultElementId).className = 'result error';
+            }
+        }
+
+        //  consultar movimientos
+        async function handleMovimientos(event) {
+            event.preventDefault();
+            const usuarioId = document.getElementById('movimientosId').value;
+            
+            try {
+                const response = await fetch(`/movimientos?usuarioId=${usuarioId}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('movimientosResult').textContent = 
+                        `Mostrando ${data.movimientos?.length || 0} movimientos`;
+                    document.getElementById('movimientosResult').className = 'result success';
+                    displayMovimientos(data);
+                } else {
+                    throw new Error(data.message || 'Error al obtener movimientos');
+                }
+            } catch (error) {
+                document.getElementById('movimientosResult').textContent = error.message;
+                document.getElementById('movimientosResult').className = 'result error';
+                document.getElementById('movimientosList').innerHTML = '';
+                document.getElementById('usuarioInfo').innerHTML = '';
+            }
+        }
+
+        //  para pago de servicio
+        async function handlePagoServicio(event) {
+            event.preventDefault();
+            
+            const id = document.getElementById('pagoId').value;
+            const monto = document.getElementById('pagoMonto').value;
+            const servicio = document.getElementById('pagoServicio').value;
+            
+            try {
+                const response = await fetch('/pagar_servicio', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        id, 
+                        monto: parseFloat(monto), 
+                        servicio 
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('pagoServicioResult').textContent = 'Pago realizado con éxito!';
+                    document.getElementById('pagoServicioResult').className = 'result success';
+                    
+                    // Actualizar movimientos
+                    document.getElementById('movimientosId').value = id;
+                    document.getElementById('movimientosForm').dispatchEvent(new Event('submit'));
+                } else {
+                    throw new Error(result.message || 'Error en el pago');
+                }
+            } catch (error) {
+                document.getElementById('pagoServicioResult').textContent = error.message;
+                document.getElementById('pagoServicioResult').className = 'result error';
+            }
+        }
+
+        // manejadores de eventos
+        document.getElementById('consignarForm').addEventListener('submit', (e) => 
+            handleFormSubmit(e, '/consignar', 'consignarResult'));
+        
+        document.getElementById('retiroForm').addEventListener('submit', (e) => 
+            handleFormSubmit(e, '/retiro', 'retiroResult'));
+        
+        document.getElementById('pagoServicioForm').addEventListener('submit', handlePagoServicio);
+        
+        document.getElementById('movimientosForm').addEventListener('submit', handleMovimientos);
+    </script>
+</body>
+</html>

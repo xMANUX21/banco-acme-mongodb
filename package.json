@@ -1,0 +1,23 @@
+{
+  "name": "banco-mongodb",
+  "version": "1.0.0",
+  "description": "actividad de castigo",
+  "main": "loaddata.js",
+  "type": "module",
+  "scripts": {
+    "create":"node --env-file=.env dbInitialization.js",
+    "dev":"node --env-file=.env loaddata.js"
+  },
+  "keywords": [
+    "monguito",
+    "node.js"
+  ],
+  "author": "Manuel.c",
+  "license": "ISC",
+  "devDependencies": {
+    "mongodb": "6.16.0"
+  },
+  "dependencies": {
+    "dotenv": "^16.5.0"
+  }
+}

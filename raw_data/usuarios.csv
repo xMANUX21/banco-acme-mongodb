@@ -1,0 +1,3 @@
+nombre,documento,clave,saldo,fecha_registro
+Juan Pérez,12345678,hashclave1,1000.50,2025-05-15
+María López,23456789,hashclave2,500.00,2025-05-14
